@@ -10,6 +10,9 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import argparse
 import requests
+# To tune according to SSL
+requests.packages.urllib3.disable_warnings()
+
 import datetime
 import logging
 from dateutil.parser import parse as date_parse

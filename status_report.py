@@ -1,5 +1,8 @@
 import sys, os, glob
 import requests
+# To tune according to SSL
+requests.packages.urllib3.disable_warnings()
+
 import logging
 import datetime
 import argparse

@@ -37,8 +37,7 @@ EMAIL_RECEIVERS = os.environ.get('LIMS_EMAIL_RECEIVERS')
 if LIMS_USER       is None or\
    LIMS_PASSWORD   is None or\
    EMAIL_SENDER    is None or\
-   EMAIL_RECEIVERS is None or\
-   EMAIL_PASSWORD  is None:
+   EMAIL_RECEIVERS is None:
    print("ERROR: define environment variables LIMS_USER, LIMS_PASSWORD, LIMS_EMAIL_ADDRESS, LIMS_EMAIL_PASSWORD, LIMS_EMAIL_RECEIVERS before running this script.")
    sys.exit(1)
 
@@ -143,8 +142,8 @@ def compute_diagnosis(samples):
 ### EMAIL NOTIFICATIONS
 ### 
 
-smtp_server     = "smtp.gmail.com"
-email_port      = 465
+smtp_server     = "localhost"
+email_port      = 25
 email_receivers = EMAIL_RECEIVERS.split(',')
 
 def html_digest(digest, log_file, tb):
@@ -378,8 +377,8 @@ def send_digest(digest, log_file, tb=None):
    message.attach(html_digest(digest, log_file, tb))
    
    context = ssl.create_default_context()
-   with smtplib.SMTP_SSL(smtp_server, email_port, context=context) as server:
-      server.login(EMAIL_SENDER, EMAIL_PASSWORD)
+   with smtplib.SMTP(smtp_server, email_port) as server:
+      #server.login(EMAIL_SENDER, EMAIL_PASSWORD)
       server.sendmail(EMAIL_SENDER, email_receivers, message.as_string())
 
       

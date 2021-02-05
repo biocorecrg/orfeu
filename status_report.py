@@ -18,9 +18,7 @@ EMAIL_RECEIVERS = os.environ.get('LIMS_EMAIL_RECEIVERS')
 
 if LIMS_USER       is None or\
    LIMS_PASSWORD   is None or\
-   EMAIL_SENDER    is None or\
-   EMAIL_RECEIVERS is None or\
-   EMAIL_PASSWORD  is None:
+   EMAIL_RECEIVERS is None:
    print("ERROR: define environment variables LIMS_USER, LIMS_PASSWORD, LIMS_EMAIL_ADDRESS, LIMS_EMAIL_PASSWORD, LIMS_EMAIL_RECEIVERS before running this script.")
    sys.exit(1)
 
@@ -232,8 +230,8 @@ def html_digest(report, stats, tb):
 ### EMAIL NOTIFICATIONS
 ### 
 
-smtp_server     = "smtp.gmail.com"
-email_port      = 465
+smtp_server     = "localhost"
+email_port      = 25
 email_receivers = EMAIL_RECEIVERS.split(',')
 
 def send_digest(digest, stats, tb=None):
@@ -244,8 +242,8 @@ def send_digest(digest, stats, tb=None):
    message.attach(html_digest(digest, stats, tb))
    
    context = ssl.create_default_context()
-   with smtplib.SMTP_SSL(smtp_server, email_port, context=context) as server:
-      server.login(EMAIL_SENDER, EMAIL_PASSWORD)
+   with smtplib.SMTP(smtp_server, email_port) as server:
+      # server.login(EMAIL_SENDER, EMAIL_PASSWORD)
       server.sendmail(EMAIL_SENDER, email_receivers, message.as_string())
 
 ###
@@ -373,7 +371,7 @@ if __name__ == '__main__':
    next_url = rnawell_base 
    rnawells = [] 
    while next_url: 
-      r, status = lims_request('GET', base_url+next_url, params={'limit': 1000}) 
+      r, status = lims_request('GET', base_url+next_url, params={'limit': 5000}) 
       assert_critical(status < 300, 'Could not retreive rna wells from LIMS')
       rnawells.extend(r.json()['objects']) 
       next_url = r.json()['meta']['next']
@@ -382,25 +380,25 @@ if __name__ == '__main__':
    next_url = pcrwell_base
    pcrwells = [] 
    while next_url: 
-      r, status = lims_request('GET', base_url+next_url, params={'limit': 1000}) 
+      r, status = lims_request('GET', base_url+next_url, params={'limit': 5000}) 
       assert_critical(status < 300, 'Could not retreive pcr wells from LIMS')
       pcrwells.extend(r.json()['objects']) 
       next_url = r.json()['meta']['next']
 
    # Get pcr plate projects
-   next_url = pcrproject_base
+   next_url = pcrproject_url
    pcrprojects = []
    while next_url:
-      r, status = lims_request('GET', base_url+next_url, params={'limit': 1000})
+      r, status = lims_request('GET', next_url, params={'limit': 5000})
       assert_critical(status < 300, 'Could not retreive pcr plate projects from LIMS')
       pcrprojects.extend(r.json()['objects'])
       next_url = r.json()['meta']['next']
 
    # Get pcr runs
-   next_url = pcrrun_base
+   next_url = pcrrun_url
    pcrruns_data = []
    while next_url:
-      r, status = lims_request('GET', base_url+next_url, params={'limit': 1000})
+      r, status = lims_request('GET', next_url, params={'limit': 5000})
       assert_critical(status < 300, 'Could not retreive pcr runs from LIMS')
       pcrruns_data.extend(r.json()['objects'])
       next_url = r.json()['meta']['next']
@@ -408,10 +406,10 @@ if __name__ == '__main__':
    pcrruns = {o['pcr_plate']: o for o in pcrruns_data}
 
    # Get pcr plates
-   next_url  = pcrplate_base
+   next_url  = pcrplate_url
    pcrplates = []
    while next_url:
-      r, status = lims_request('GET', base_url+next_url, params={'limit': 1000})
+      r, status = lims_request('GET', next_url, params={'limit': 5000})
       assert_critical(status < 300, 'Could not retreive pcr plates from LIMS')
       pcrplates.extend(r.json()['objects'])
       next_url = r.json()['meta']['next']
@@ -421,7 +419,7 @@ if __name__ == '__main__':
 
 
    # Get projects
-   r, status = lims_request('GET', project_url, params={'limit': 1000})
+   r, status = lims_request('GET', project_url, params={'limit': 5000})
    assert_critical(status < 300, 'Could not retreive projects from LIMS')
    projects = r.json()['objects']
    projects = {o['resource_uri']: o for o in projects if not o['name'] in ['CONTROLS', 'SERRANO_HOSPITAL', 'TESTS']}
@@ -451,16 +449,11 @@ if __name__ == '__main__':
    ## PCR STATUS INFO
    ##
 
-   # Rna plates
-   next_url = rnaplate_base 
-   rnaplates = [] 
-   while next_url: 
-      r, status = lims_request('GET', base_url+next_url, params={'limit': 1000}) 
-      assert_critical(status < 300, 'Could not retreive rna plates from LIMS')
-      rnaplates.extend(r.json()['objects']) 
-      next_url = r.json()['meta']['next']
-   rnaplates = {o['barcode']: o for o in rnaplates}   
-
+   # Get rna plates
+   r, status = lims_request('GET', rnaplate_url, params={'limit': 10000})
+   assert_critical(status < 300, 'Could not retreive rna plates from LIMS')
+   rnaplates = r.json()['objects']
+   rnaplates = {o['barcode']: o for o in rnaplates}
 
    # Get organizations
    r, status = lims_request('GET', organization_url, params={'limit': 10000})
